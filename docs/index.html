@@ -116,7 +116,7 @@
 <div id="scene" aria-label="Interactive 3D chart of daily GitHub contributions over the last 12 months" role="img"></div>
 
 <header class="panel">
-  <h1><a href="https://github.com/HarshBaldaniya">Harsh Baldaniya</a></h1>
+  <h1><a href="https://github.com/HarshBaldaniya" target="_blank" rel="noopener">Harsh Baldaniya</a></h1>
   <p class="sub">GitHub contributions, last 12 months</p>
   <dl class="stats">
     <div><dt>Last 12 months</dt><dd id="s-year">–</dd></div>
@@ -126,7 +126,7 @@
   </dl>
 </header>
 
-<a class="back panel" href="https://github.com/HarshBaldaniya">Back to GitHub</a>
+<a class="back panel" href="https://github.com/HarshBaldaniya" target="_blank" rel="noopener">Open GitHub profile</a>
 
 <div class="controls panel">
   <div class="legend" aria-hidden="true">Less <i style="background:var(--l0)"></i><i style="background:var(--l1)"></i><i style="background:var(--l2)"></i><i style="background:var(--l3)"></i><i style="background:var(--l4)"></i> More</div>
@@ -156,7 +156,7 @@ const fmtShort = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US
 
 function fail(message) {
   statusEl.hidden = false;
-  statusEl.innerHTML = `<p>${message}<br /><a href="https://github.com/HarshBaldaniya">Back to the GitHub profile</a></p>`;
+  statusEl.innerHTML = `<p>${message}<br /><a href="https://github.com/HarshBaldaniya" target="_blank" rel="noopener">Open the GitHub profile</a></p>`;
 }
 
 function webglAvailable() {
