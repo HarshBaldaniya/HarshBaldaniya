@@ -39,7 +39,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add assets/github-dark.svg assets/github-light.svg docs/contributions.json
+          git add assets/github-*.svg docs/contributions.json
           if git commit -m "chore: update GitHub stats card and 3D data"; then
             git pull --rebase origin main
             git push

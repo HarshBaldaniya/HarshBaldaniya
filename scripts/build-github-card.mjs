@@ -106,9 +106,11 @@ function lastYear(days) {
 
 const SLAB = { dark: "#241c19", light: "#e9e9ee" };
 
-function graph3d(mode, days, x, y, width) {
+// k scales the labels and legend; the phone card passes a larger k because
+// it is shown at about half size.
+function graph3d(mode, days, x, y, width, k = 1, note = true, weekLimit = 53) {
   const ramp = RAMPS[mode];
-  const weeks = lastYear(days);
+  const weeks = lastYear(days).slice(-weekLimit);
   const max = Math.max(1, ...weeks.flat().map((d) => d.contributionCount));
   const U = [17, 5.2];   // one week: right and slightly down
   const V = [-9.5, 8];   // one weekday: left and down, toward the viewer
@@ -171,24 +173,32 @@ function graph3d(mode, days, x, y, width) {
   });
   const monthLabels = months.slice(1).map(({ w, label }) => {
     const [sx, sy] = screen(pt(w + 0.5, nd + 0.9, -THICK));
-    return `<text x="${sx.toFixed(1)}" y="${(sy + 4).toFixed(1)}" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="currentColor">${label}</text>`;
+    return `<text x="${sx.toFixed(1)}" y="${(sy + 4 * k).toFixed(1)}" text-anchor="middle" class="sans" font-size="${12 * k}" font-weight="600" fill="currentColor">${label}</text>`;
   }).join("");
 
-  const legendY = y + height + 34;
-  const legend = ramp.map((c, i) => `<rect x="${x + 44 + i * 18}" y="${legendY - 11}" width="12" height="12" rx="3" fill="${c}"/>`).join("");
+  const legendY = y + height + 34 * k;
+  const legend = ramp.map((c, i) => `<rect x="${x + 44 * k + i * 18 * k}" y="${legendY - 11 * k}" width="${12 * k}" height="${12 * k}" rx="${3 * k}" fill="${c}"/>`).join("");
   return {
-    height: height + 46,
+    height: height + 46 * k,
     markup: `
 <g transform="translate(${x} ${y}) scale(${scale.toFixed(4)}) translate(${-minX} ${-minY})">${platform}${shapes}</g>
 ${monthLabels}
-<g class="sans" font-size="13" font-weight="600" fill="currentColor">
+<g class="sans" font-size="${13 * k}" font-weight="600" fill="currentColor">
   <text x="${x}" y="${legendY}">Less</text>
   ${legend}
-  <text x="${x + 44 + 5 * 18 + 4}" y="${legendY}">More</text>
-  <text x="${x + width}" y="${legendY}" text-anchor="end">Last 12 months, updated daily</text>
+  <text x="${x + (44 + 5 * 18 + 4) * k}" y="${legendY}">More</text>
+  ${note ? `<text x="${x + width}" y="${legendY}" text-anchor="end">Last 12 months, updated daily</text>` : ""}
 </g>`,
   };
 }
+
+const flame = (t, a, x, y, scale = 1) => `
+<g transform="translate(${x} ${y}) scale(${scale})">
+  <g class="flame" style="transform-origin: 0px 26px">
+    <path transform="translate(-11 0)" d="M11 0 C13 7 22 11 22 20 C22 27 17 31 11 31 C5 31 0 27 0 20 C0 14 4 11 6 6 C7 11 9 12 10 12 C10 8 9 4 11 0 Z" fill="${a}"/>
+    <path transform="translate(-5 14)" d="M5 0 C7 4 10 6 10 10 C10 14 8 16 5 16 C2 16 0 14 0 10 C0 7 2 5 3 3 C4 5 5 5 5 0 Z" fill="${t.tile}"/>
+  </g>
+</g>`;
 
 // Streak strip in the layout of the classic streak card: total, a ringed
 // current streak with a flame, and the longest streak.
@@ -209,15 +219,61 @@ function streakStrip(t, a, stats, y, W) {
 ${side(cx[0], stats.total.toLocaleString("en-US"), "Total contributions", stats.first ? `${fmt(stats.first, true)} - Present` : "")}
 <path d="M${W / 3} ${y + 16} V${y + 196}" stroke="${t.border}" stroke-width="1.5"/>
 <circle cx="${cx[1]}" cy="${ry}" r="60" fill="none" stroke="${a}" stroke-width="6" mask="url(#ring-gap)"/>
-<g class="flame" style="transform-origin: ${cx[1]}px ${ry - 52}px">
-  <path transform="translate(${cx[1] - 11} ${ry - 78})" d="M11 0 C13 7 22 11 22 20 C22 27 17 31 11 31 C5 31 0 27 0 20 C0 14 4 11 6 6 C7 11 9 12 10 12 C10 8 9 4 11 0 Z" fill="${a}"/>
-  <path transform="translate(${cx[1] - 5} ${ry - 64})" d="M5 0 C7 4 10 6 10 10 C10 14 8 16 5 16 C2 16 0 14 0 10 C0 7 2 5 3 3 C4 5 5 5 5 0 Z" fill="${t.tile}"/>
-</g>
+${flame(t, a, cx[1], ry - 78)}
 <text x="${cx[1]}" y="${ry + 17}" text-anchor="middle" class="display" font-size="44" font-weight="800" letter-spacing="-1" fill="${t.text}">${stats.current.length}</text>
 <text x="${cx[1]}" y="${y + 186}" text-anchor="middle" class="sans" font-size="18" font-weight="700" fill="${a}">Current streak</text>
 <text x="${cx[1]}" y="${y + 212}" text-anchor="middle" class="sans" font-size="15" fill="${t.muted}">${esc(range(stats.current))}</text>
 <path d="M${(2 * W) / 3} ${y + 16} V${y + 196}" stroke="${t.border}" stroke-width="1.5"/>
 ${side(cx[2], String(stats.longest.length), "Longest streak", range(stats.longest))}`;
+}
+
+// Phone strip: the ringed current streak on top, the other two below.
+function streakStripMobile(t, a, stats, y, W) {
+  const cx = W / 2, ry = y + 104, R = 76;
+  const side = (x, value, label, note) => `
+<text x="${x}" y="${y + 384}" text-anchor="middle" class="display" font-size="50" font-weight="800" letter-spacing="-1" fill="${t.text}">${esc(value)}</text>
+<text x="${x}" y="${y + 424}" text-anchor="middle" class="sans" font-size="24" font-weight="600" fill="${t.text}">${esc(label)}</text>
+<text x="${x}" y="${y + 458}" text-anchor="middle" class="sans" font-size="21" fill="${t.muted}">${esc(note)}</text>`;
+  return `
+<defs>
+  <mask id="ring-gap-m">
+    <rect x="0" y="0" width="${W}" height="${y + 520}" fill="#fff"/>
+    <circle cx="${cx}" cy="${ry - R}" r="22" fill="#000"/>
+  </mask>
+</defs>
+<circle cx="${cx}" cy="${ry}" r="${R}" fill="none" stroke="${a}" stroke-width="8" mask="url(#ring-gap-m)"/>
+${flame(t, a, cx, ry - R - 22, 1.35)}
+<text x="${cx}" y="${ry + 22}" text-anchor="middle" class="display" font-size="58" font-weight="800" letter-spacing="-1" fill="${t.text}">${stats.current.length}</text>
+<text x="${cx}" y="${y + 236}" text-anchor="middle" class="sans" font-size="26" font-weight="700" fill="${a}">Current streak</text>
+<text x="${cx}" y="${y + 270}" text-anchor="middle" class="sans" font-size="21" fill="${t.muted}">${esc(range(stats.current))}</text>
+<path d="M40 ${y + 306} H${W - 40}" stroke="${t.border}"/>
+${side(W / 4, stats.total.toLocaleString("en-US"), "Contributions", stats.first ? `Since ${fmt(stats.first, true).replace(/ \d+,/, "")}` : "")}
+<path d="M${cx} ${y + 336} V${y + 470}" stroke="${t.border}" stroke-width="1.5"/>
+${side((3 * W) / 4, String(stats.longest.length), "Longest streak", range(stats.longest))}`;
+}
+
+const STYLE = `
+  .flame { animation: flicker 2.4s ease-in-out infinite; }
+  @keyframes flicker { 50% { transform: scale(1.08) rotate(-3deg); } }`;
+const LABEL = (stats) => `On GitHub: ${stats.total} contributions, current streak ${stats.current.length} days, longest streak ${stats.longest.length} days.`;
+
+function cardMobile(mode, stats) {
+  const t = THEMES[mode];
+  const a = ACCENTS.ember[mode];
+  const W = 600;
+  const graph = graph3d(mode, stats.days, 40, 176, W - 80, 1.8, false, 26);
+  const stripY = 176 + graph.height + 36;
+  const H = stripY + 500;
+  const body = `
+${tileFrame(t, W, H, a, "ghm", [0, 0])}
+<text x="40" y="92" class="display" font-size="44" font-weight="800" letter-spacing="-0.8" fill="${t.text}">On GitHub</text>
+<text x="40" y="134" class="sans" font-size="22" font-weight="600" fill="${t.muted}">Last 6 months, updated daily</text>
+<text x="${W - 70}" y="88" text-anchor="end" class="sans" font-size="23" font-weight="700" fill="${a}">Explore in 3D</text>
+<path d="M${W - 60} 84 l11 -11 M${W - 58} 73 h9 v9" fill="none" stroke="${a}" stroke-width="2.6" stroke-linecap="round"/>
+<g color="${t.muted}">${graph.markup}</g>
+<path d="M40 ${stripY - 14} H${W - 40}" stroke="${t.border}"/>
+${streakStripMobile(t, a, stats, stripY, W)}`;
+  return svg(W, H, LABEL(stats), body, STYLE);
 }
 
 function card(mode, stats) {
@@ -235,15 +291,15 @@ ${tileFrame(t, W, H, a, "gh", [0, 0])}
 <g color="${t.muted}">${graph.markup}</g>
 <path d="M40 ${stripY - 14} H${W - 40}" stroke="${t.border}"/>
 ${streakStrip(t, a, stats, stripY, W)}`;
-  const style = `
-  .flame { animation: flicker 2.4s ease-in-out infinite; }
-  @keyframes flicker { 50% { transform: scale(1.08) rotate(-3deg); } }`;
-  return svg(W, H, `On GitHub: ${stats.total} contributions, current streak ${stats.current.length} days, longest streak ${stats.longest.length} days.`, body, style);
+  return svg(W, H, LABEL(stats), body, STYLE);
 }
 
 const stats = summarise(await contributionDays());
 mkdirSync(OUT, { recursive: true });
-for (const mode of Object.keys(THEMES)) writeFileSync(join(OUT, `github-${mode}.svg`), card(mode, stats));
+for (const mode of Object.keys(THEMES)) {
+  writeFileSync(join(OUT, `github-${mode}.svg`), card(mode, stats));
+  writeFileSync(join(OUT, `github-mobile-${mode}.svg`), cardMobile(mode, stats));
+}
 
 const year = lastYear(stats.days).flat().filter(Boolean);
 const page = {
