@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Harsh Baldaniya · Contributions in 3D</title>
+<meta name="description" content="Harsh Baldaniya's GitHub contributions over the last 12 months as an interactive 3D city. Updated daily." />
+<meta name="color-scheme" content="dark light" />
+<style>
+  @font-face { font-family: "Unbounded"; font-weight: 700; font-display: swap; src: url("fonts/Unbounded-700.woff2") format("woff2"); }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: swap; src: url("fonts/Unbounded-800.woff2") format("woff2"); }
+
+  :root {
+    --bg: #0d0a09;
+    --panel: rgba(22, 18, 16, 0.78);
+    --border: #2e2522;
+    --text: #f6efeb;
+    --muted: #b9aea8;
+    --accent: #ff7a45;
+    --l0: #2c2320; --l1: #7a2a12; --l2: #c2410c; --l3: #ff5a1f; --l4: #ffc04d;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f4f4f6;
+      --panel: rgba(255, 255, 255, 0.82);
+      --border: #e2e2e6;
+      --text: #18181b;
+      --muted: #52525b;
+      --accent: #c2410c;
+      --l0: #dedee3; --l1: #fed7aa; --l2: #fb923c; --l3: #ea580c; --l4: #9a3412;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+  body { font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  #scene { position: fixed; inset: 0; touch-action: none; }
+  #scene canvas { display: block; outline: none; }
+
+  .panel {
+    position: fixed; z-index: 10;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  header.panel { top: 16px; left: 16px; padding: 18px 22px; max-width: calc(100vw - 32px); }
+  h1 { margin: 0; font: 800 clamp(20px, 3.2vw, 28px)/1.1 "Unbounded", sans-serif; letter-spacing: -0.02em; }
+  h1 a { color: inherit; text-decoration: none; }
+  .sub { margin: 6px 0 14px; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(4, auto); gap: 6px 26px; margin: 0; }
+  .stats div { min-width: 0; }
+  .stats dt { color: var(--muted); font-size: 13px; }
+  .stats dd { margin: 2px 0 0; font: 800 22px/1.1 "Unbounded", sans-serif; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stats .accent dd { color: var(--accent); }
+
+  .controls { bottom: 16px; left: 16px; right: 16px; margin-inline: auto; width: fit-content; max-width: calc(100vw - 32px);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; padding: 10px 12px 10px 18px; }
+  .legend { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .hint { color: var(--muted); font-size: 13px; }
+  .buttons { display: flex; gap: 8px; }
+  button {
+    font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1; color: var(--text); background: transparent;
+    border: 1px solid var(--border); border-radius: 999px; padding: 9px 14px; cursor: pointer;
+    transition: border-color 160ms ease-out, color 160ms ease-out;
+  }
+  button:hover { border-color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
+  .back { position: fixed; z-index: 10; top: 16px; right: 16px; padding: 10px 16px; color: var(--text); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .back:hover { color: var(--accent); }
+  .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #tooltip {
+    position: fixed; z-index: 20; pointer-events: none; padding: 8px 12px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    font-size: 13px; white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 14px));
+    transition: opacity 120ms ease-out;
+  }
+  #tooltip.show { opacity: 1; }
+  #tooltip b { font-weight: 800; color: var(--accent); }
+
+  .month { color: var(--muted); font-size: 12px; font-weight: 600; pointer-events: none; user-select: none; }
+
+  #status { position: fixed; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 24px; z-index: 5; }
+  #status[hidden] { display: none; }
+  #status a { color: var(--accent); }
+
+  @media (max-height: 520px) {
+    header.panel { padding: 10px 14px; }
+    h1 { font-size: 17px; }
+    .sub { display: none; }
+    .stats { margin-top: 6px; gap: 2px 18px; }
+    .stats dt { font-size: 11px; }
+    .stats dd { font-size: 15px; }
+    .controls { padding: 6px 8px 6px 14px; bottom: 10px; }
+    .hint { display: none; }
+  }
+  @media (max-width: 640px) {
+    header.panel { padding: 14px 16px; }
+    header.panel { right: 16px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+    .stats dd { font-size: 18px; }
+    .hint { display: none; }
+    .back { display: none; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="scene" aria-label="Interactive 3D chart of daily GitHub contributions over the last 12 months" role="img"></div>
+
+<header class="panel">
+  <h1><a href="https://github.com/HarshBaldaniya">Harsh Baldaniya</a></h1>
+  <p class="sub">GitHub contributions, last 12 months</p>
+  <dl class="stats">
+    <div><dt>Last 12 months</dt><dd id="s-year">–</dd></div>
+    <div class="accent"><dt>Current streak</dt><dd id="s-current">–</dd></div>
+    <div><dt>Longest streak</dt><dd id="s-longest">–</dd></div>
+    <div><dt>All time</dt><dd id="s-total">–</dd></div>
+  </dl>
+</header>
+
+<a class="back panel" href="https://github.com/HarshBaldaniya">Back to GitHub</a>
+
+<div class="controls panel">
+  <div class="legend" aria-hidden="true">Less <i style="background:var(--l0)"></i><i style="background:var(--l1)"></i><i style="background:var(--l2)"></i><i style="background:var(--l3)"></i><i style="background:var(--l4)"></i> More</div>
+  <span class="hint">Drag to rotate · Scroll to zoom · Right-drag to pan</span>
+  <div class="buttons">
+    <button id="rotate" type="button" aria-pressed="true">Auto-rotate</button>
+    <button id="reset" type="button">Reset view</button>
+  </div>
+</div>
+
+<div id="tooltip" role="status" aria-live="polite"></div>
+<div id="status">Loading contributions</div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+const statusEl = document.getElementById("status");
+const tooltip = document.getElementById("tooltip");
+const host = document.getElementById("scene");
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmtDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const fmtShort = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+function fail(message) {
+  statusEl.hidden = false;
+  statusEl.innerHTML = `<p>${message}<br /><a href="https://github.com/HarshBaldaniya">Back to the GitHub profile</a></p>`;
+}
+
+function webglAvailable() {
+  try {
+    const c = document.createElement("canvas");
+    return !!(window.WebGL2RenderingContext && c.getContext("webgl2")) || !!c.getContext("webgl");
+  } catch { return false; }
+}
+
+async function main() {
+  if (!webglAvailable()) return fail("This browser can't show 3D graphics.");
+
+  let data;
+  try {
+    const res = await fetch("contributions.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+  } catch {
+    return fail("Couldn't load the contribution data. Try again in a moment.");
+  }
+  statusEl.hidden = true;
+
+  // ---- stats
+  const { stats } = data;
+  const days = (n) => `${n} day${n === 1 ? "" : "s"}`;
+  document.getElementById("s-year").textContent = stats.lastYear.toLocaleString("en-US");
+  document.getElementById("s-current").textContent = days(stats.current.length);
+  document.getElementById("s-longest").textContent = days(stats.longest.length);
+  document.getElementById("s-total").textContent = stats.total.toLocaleString("en-US");
+
+  // ---- layout: weeks along X, weekdays along Z
+  const cells = [];
+  let week = 0;
+  data.days.forEach((d, i) => {
+    const weekday = new Date(`${d.date}T00:00:00Z`).getUTCDay();
+    if (i > 0 && weekday === 0) week++;
+    cells.push({ ...d, week, weekday });
+  });
+  const weeks = week + 1;
+  const max = Math.max(1, ...cells.map((c) => c.count));
+  const heightOf = (c) => (c.level === 0 ? 0.06 : 0.35 + Math.sqrt(c.count / max) * 6.5);
+  const STEP = 1.12;
+  const posX = (w) => (w - (weeks - 1) / 2) * STEP;
+  const posZ = (d) => (d - 3) * STEP;
+
+  // ---- renderer, scene, camera
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(host.clientWidth, host.clientHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  host.appendChild(renderer.domElement);
+
+  const labels = new CSS2DRenderer();
+  labels.setSize(host.clientWidth, host.clientHeight);
+  labels.domElement.style.cssText = "position:absolute;inset:0;pointer-events:none";
+  host.appendChild(labels.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, host.clientWidth / host.clientHeight, 0.5, 400);
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x2a1a14, 1.1);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff1e6, 2.4);
+  sun.position.set(-22, 40, 26);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -36; sun.shadow.camera.right = 36;
+  sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 120;
+  sun.shadow.bias = -0.0004;
+  sun.shadow.radius = 4;
+  scene.add(sun);
+
+  // ---- platform
+  const platformMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 });
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(weeks * STEP + 1.4, 0.6, 7 * STEP + 1.4), platformMat);
+  platform.position.y = -0.3;
+  platform.receiveShadow = true;
+  scene.add(platform);
+
+  // ---- one instanced mesh for every day
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  geo.translate(0, 0.5, 0);
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05 });
+  const mesh = new THREE.InstancedMesh(geo, mat, cells.length);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  const m4 = new THREE.Matrix4();
+  const setHeight = (i, h) => {
+    const c = cells[i];
+    m4.makeScale(1, Math.max(h, 0.001), 1);
+    m4.setPosition(posX(c.week), 0, posZ(c.weekday));
+    mesh.setMatrixAt(i, m4);
+  };
+  cells.forEach((c, i) => setHeight(i, heightOf(c)));
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.computeBoundingSphere();
+  mesh.computeBoundingBox();
+
+  // ---- theme colours (follows the OS setting live)
+  const ramp = [];
+  const colour = new THREE.Color();
+  let hovered = -1;
+  function applyTheme() {
+    for (let l = 0; l < 5; l++) ramp[l] = new THREE.Color(css(`--l${l}`));
+    scene.background = new THREE.Color(css("--bg"));
+    platformMat.color.set(css("--border"));
+    cells.forEach((c, i) => mesh.setColorAt(i, ramp[c.level]));
+    if (hovered >= 0) highlight(hovered);
+    mesh.instanceColor.needsUpdate = true;
+  }
+  function highlight(i) {
+    colour.copy(ramp[cells[i].level]).offsetHSL(0, 0, 0.12);
+    mesh.setColorAt(i, colour);
+  }
+  applyTheme();
+  matchMedia("(prefers-color-scheme: light)").addEventListener("change", applyTheme);
+
+  // ---- month labels along the front edge
+  let lastMonth = -1;
+  cells.forEach((c) => {
+    if (c.weekday !== 0) return;
+    const month = new Date(`${c.date}T00:00:00Z`).getUTCMonth();
+    if (month === lastMonth) return;
+    if (lastMonth !== -1) {
+      const el = document.createElement("div");
+      el.className = "month";
+      el.textContent = new Date(`${c.date}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+      const label = new CSS2DObject(el);
+      label.position.set(posX(c.week), 0, posZ(6) + 1.6);
+      scene.add(label);
+    }
+    lastMonth = month;
+  });
+
+  // ---- camera and controls
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 14;
+  controls.maxDistance = 220;
+  controls.maxPolarAngle = Math.PI * 0.47;
+  controls.screenSpacePanning = true;
+  controls.autoRotateSpeed = 0.5;
+  controls.autoRotate = !reducedMotion;
+
+  // Landscape: a front view sized so the whole year fits the width.
+  // Portrait: look down the length of the year, newest weeks nearest.
+  const yearLength = weeks * STEP;
+  function homeView() {
+    const aspect = host.clientWidth / host.clientHeight;
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    if (aspect >= 1) {
+      const dist = THREE.MathUtils.clamp((yearLength * 0.5) / (tanV * aspect), 30, 200);
+      return { dir: new THREE.Vector3(-0.12, 0.48, 0.87).normalize(), dist, target: new THREE.Vector3(0, 1.4, 0) };
+    }
+    const dist = THREE.MathUtils.clamp((yearLength * 0.62) / tanV, 40, 200);
+    return { dir: new THREE.Vector3(0.78, 0.6, 0.18).normalize(), dist, target: new THREE.Vector3(-yearLength * 0.08, 0.8, 0) };
+  }
+  function resetView() {
+    const { dir, dist, target } = homeView();
+    controls.target.copy(target);
+    camera.position.copy(dir).multiplyScalar(dist).add(target);
+    camera.lookAt(target);
+    controls.update();
+  }
+  resetView();
+
+  const rotateBtn = document.getElementById("rotate");
+  const setAutoRotate = (on) => {
+    controls.autoRotate = on;
+    rotateBtn.setAttribute("aria-pressed", String(on));
+  };
+  setAutoRotate(!reducedMotion);
+  rotateBtn.addEventListener("click", () => setAutoRotate(!controls.autoRotate));
+  document.getElementById("reset").addEventListener("click", resetView);
+  let dragging = false;
+  controls.addEventListener("start", () => { dragging = true; setAutoRotate(false); setHovered(-1); });
+  controls.addEventListener("end", () => { dragging = false; });
+
+  // ---- hover and tap
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let pointerPos = null;
+  function pick(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.intersectObject(mesh, false)[0];
+    setHovered(hit ? hit.instanceId : -1, clientX, clientY);
+  }
+  function setHovered(i, x, y) {
+    if (i !== hovered) {
+      if (hovered >= 0) mesh.setColorAt(hovered, ramp[cells[hovered].level]);
+      if (i >= 0) highlight(i);
+      mesh.instanceColor.needsUpdate = true;
+      hovered = i;
+      renderer.domElement.style.cursor = i >= 0 ? "pointer" : "";
+    }
+    if (i < 0) { tooltip.classList.remove("show"); return; }
+    const c = cells[i];
+    tooltip.innerHTML = c.count
+      ? `<b>${c.count}</b> contribution${c.count === 1 ? "" : "s"} on ${fmtDate(c.date)}`
+      : `No contributions on ${fmtDate(c.date)}`;
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+    tooltip.classList.add("show");
+  }
+  renderer.domElement.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "mouse") pointerPos = [e.clientX, e.clientY];
+  });
+  renderer.domElement.addEventListener("pointerleave", () => { pointerPos = null; setHovered(-1); });
+  renderer.domElement.addEventListener("pointerup", (e) => {
+    if (e.pointerType !== "mouse") pick(e.clientX, e.clientY);
+  });
+
+  // ---- intro: blocks rise week by week
+  const intro = { start: performance.now(), done: reducedMotion };
+  const easeOut = (t) => 1 - Math.pow(1 - t, 4);
+  if (!reducedMotion) {
+    cells.forEach((c, i) => setHeight(i, 0));
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+  function stepIntro(now) {
+    const elapsed = (now - intro.start) / 1000;
+    let finished = true;
+    cells.forEach((c, i) => {
+      const t = THREE.MathUtils.clamp((elapsed - c.week * 0.018) / 0.9, 0, 1);
+      if (t < 1) finished = false;
+      setHeight(i, heightOf(c) * easeOut(t));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    intro.done = finished;
+  }
+
+  // ---- resize and render loop
+  function resize() {
+    const w = host.clientWidth, h = host.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    labels.setSize(w, h);
+  }
+  addEventListener("resize", resize);
+
+  renderer.setAnimationLoop((now) => {
+    if (!intro.done) stepIntro(now);
+    controls.update();
+    if (pointerPos && !dragging) pick(pointerPos[0], pointerPos[1]);
+    renderer.render(scene, camera);
+    labels.render(scene, camera);
+  });
+}
+
+main().catch((err) => {
+  console.error(err);
+  fail("Something went wrong drawing the chart.");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Runs only after the WAKATIME_API_KEY secret is added.
+# The value must be a WakaTime OAuth token, not the plugin API key:
+# https://github.com/athul/waka-readme#prep-work
+name: WakaTime stats
+
+on:
+  schedule:
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-writer
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
+    steps:
+      - name: Skip until WakaTime is connected
+        if: env.WAKATIME_API_KEY == ''
+        run: echo "WAKATIME_API_KEY is not set, so the WakaTime section stays hidden."
+
+      - uses: athul/waka-readme@master
+        if: env.WAKATIME_API_KEY != ''
+        with:
+          WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
+          SHOW_TITLE: true
+          TIME_RANGE: last_7_days
+          SECTION_NAME: waka
