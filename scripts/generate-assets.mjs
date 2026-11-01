@@ -2,7 +2,7 @@
 // Edit the data below, then run: node scripts/generate-assets.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ACCENTS, EMBER, OUT, THEMES, esc, svg, tileFrame, wrap } from "./theme.mjs";
+import { ACCENTS, DESKTOP_SCALE, EMBER, OUT, THEMES, esc, svg, tileFrame, wrap } from "./theme.mjs";
 
 const textLines = (lines, x, y, lh, attrs) =>
   lines.map((l, i) => `<text x="${x}" y="${y + i * lh}" ${attrs}>${esc(l)}</text>`).join("\n");
@@ -29,25 +29,9 @@ function chips(t, items, x, y, accent, fs = 13, maxX = Infinity) {
   return { markup, bottom: cy + h };
 }
 
-// A drawable piece: rendered alone, or composed with others into one SVG.
+// A drawable piece, rendered at desktop or phone size.
 const part = (w, h, label, body, style = "") => ({ w, h, label, body, style });
-const render = (p) => svg(p.w, p.h, p.label, p.body, p.style);
-function compose(parts, direction, gap = 16) {
-  let offset = 0;
-  const body = parts.map((p) => {
-    const g = direction === "row" ? `<g transform="translate(${offset} 0)">${p.body}</g>` : `<g transform="translate(0 ${offset})">${p.body}</g>`;
-    offset += (direction === "row" ? p.w : p.h) + gap;
-    return g;
-  }).join("\n");
-  const size = offset - gap;
-  return part(
-    direction === "row" ? size : Math.max(...parts.map((p) => p.w)),
-    direction === "row" ? Math.max(...parts.map((p) => p.h)) : size,
-    parts.map((p) => p.label).join(" "),
-    body,
-    parts.map((p) => p.style).join("\n"),
-  );
-}
+const render = (p, scale) => svg(p.w, p.h, p.label, p.body, p.style, scale);
 
 // ---------------------------------------------------------------- hero
 
@@ -462,17 +446,19 @@ ${rows.join("\n")}`;
 // ---------------------------------------------------------------- write
 
 mkdirSync(OUT, { recursive: true });
-const write = (name, p) => writeFileSync(join(OUT, `${name}.svg`), render(p));
+const desktop = (name, p) => writeFileSync(join(OUT, `${name}.svg`), render(p, DESKTOP_SCALE));
+const phone = (name, p) => writeFileSync(join(OUT, `${name}.svg`), render(p, 1));
 
-write("hero", hero());
-write("hero-mobile", heroMobile());
+desktop("hero", hero());
+phone("hero-mobile", heroMobile());
 for (const mode of Object.keys(THEMES)) {
   const t = THEMES[mode];
-  write(`work-1-${mode}`, compose([wideTile(t, mode, "glyphcast"), squareTile(t, mode, "eventix")], "row"));
-  write(`work-2-${mode}`, compose([squareTile(t, mode, "brainbox"), wideTile(t, mode, "harshos")], "row"));
-  write(`work-1-mobile-${mode}`, compose([phoneTile(t, mode, "glyphcast"), phoneTile(t, mode, "eventix")], "column"));
-  write(`work-2-mobile-${mode}`, compose([phoneTile(t, mode, "brainbox"), phoneTile(t, mode, "harshos")], "column"));
-  write(`toolbox-${mode}`, await toolbox(t, mode));
-  write(`toolbox-mobile-${mode}`, await toolboxMobile(t, mode));
+  desktop(`glyphcast-${mode}`, wideTile(t, mode, "glyphcast"));
+  desktop(`eventix-${mode}`, squareTile(t, mode, "eventix"));
+  desktop(`brainbox-${mode}`, squareTile(t, mode, "brainbox"));
+  desktop(`harshos-${mode}`, wideTile(t, mode, "harshos"));
+  for (const key of Object.keys(PROJECTS)) phone(`${key}-mobile-${mode}`, phoneTile(t, mode, key));
+  desktop(`toolbox-${mode}`, await toolbox(t, mode));
+  phone(`toolbox-mobile-${mode}`, await toolboxMobile(t, mode));
 }
-console.log(`Wrote 14 files to ${OUT}`);
+console.log(`Wrote 22 files to ${OUT}`);

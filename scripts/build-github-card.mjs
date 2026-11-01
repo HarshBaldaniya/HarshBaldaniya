@@ -5,7 +5,7 @@
 // Local run: GITHUB_TOKEN=$(gh auth token) node scripts/build-github-card.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ACCENTS, OUT, ROOT, THEMES, esc, svg, tileFrame } from "./theme.mjs";
+import { ACCENTS, DESKTOP_SCALE, OUT, ROOT, THEMES, esc, svg, tileFrame } from "./theme.mjs";
 
 const PAGE_URL = "https://harshbaldaniya.github.io/HarshBaldaniya/";
 
@@ -291,7 +291,7 @@ ${tileFrame(t, W, H, a, "gh", [0, 0])}
 <g color="${t.muted}">${graph.markup}</g>
 <path d="M40 ${stripY - 14} H${W - 40}" stroke="${t.border}"/>
 ${streakStrip(t, a, stats, stripY, W)}`;
-  return svg(W, H, LABEL(stats), body, STYLE);
+  return svg(W, H, LABEL(stats), body, STYLE, DESKTOP_SCALE);
 }
 
 const stats = summarise(await contributionDays());

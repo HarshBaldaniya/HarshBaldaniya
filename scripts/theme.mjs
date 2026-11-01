@@ -58,7 +58,13 @@ export function wrap(text, max) {
 // so two edges make the same 16px gap between tiles and between sections.
 export const PAD = 8;
 
-export const svg = (w, h, label, body, style = "") => `<svg xmlns="http://www.w3.org/2000/svg" width="${w + 2 * PAD}" height="${h + 2 * PAD}" viewBox="${-PAD} ${-PAD} ${w + 2 * PAD} ${h + 2 * PAD}" role="img" aria-label="${esc(label)}">
+// The README sets no image widths: each SVG's width/height is its display
+// size. GitHub's profile README column is 846px wide on screens 1280px and up,
+// so the desktop artwork (1232 units across) is scaled to 844px, leaving 2px of
+// slack so a row never wraps. Phone artwork stays 616 wide and shrinks to fit.
+export const DESKTOP_SCALE = 844 / 1232;
+
+export const svg = (w, h, label, body, style = "", scale = 1) => `<svg xmlns="http://www.w3.org/2000/svg" width="${((w + 2 * PAD) * scale).toFixed(1)}" height="${((h + 2 * PAD) * scale).toFixed(1)}" viewBox="${-PAD} ${-PAD} ${w + 2 * PAD} ${h + 2 * PAD}" role="img" aria-label="${esc(label)}">
 <title>${esc(label)}</title>
 <style>
   ${FONT_FACES}
