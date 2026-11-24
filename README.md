@@ -34,8 +34,8 @@
 <br />
 
 <!--START_SECTION:activity-->
-1. 🚀 Published release [v0.0.10](https://github.com/HarshBaldaniya/airband/releases/tag/v0.0.10) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
-2. 🚀 Published release [Airband 0.0.9](https://github.com/HarshBaldaniya/airband/releases/tag/v0.0.9) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
+1. 🎉 Merged PR [#1](https://github.com/HarshBaldaniya/airband/pull/1) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
+2. 💪 Opened PR [#1](https://github.com/HarshBaldaniya/airband/pull/1) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
 <!--END_SECTION:activity-->
 
 </details>
