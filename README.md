@@ -34,8 +34,8 @@
 <br />
 
 <!--START_SECTION:activity-->
-1. 🎉 Merged PR [#1](https://github.com/HarshBaldaniya/airband/pull/1) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
-2. 💪 Opened PR [#1](https://github.com/HarshBaldaniya/airband/pull/1) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
+1. 💪 Opened PR [#25](https://github.com/HarshBaldaniya/airband/pull/25) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
+2. ❗ Opened issue [#21](https://github.com/HarshBaldaniya/airband/issues/21) in [HarshBaldaniya/airband](https://github.com/HarshBaldaniya/airband)
 <!--END_SECTION:activity-->
 
 </details>
